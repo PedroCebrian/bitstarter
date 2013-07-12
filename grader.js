@@ -27,7 +27,7 @@ var cheerio = require('cheerio');
 var rest = require('restler');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
-var URL_DEFAULT = "http://tranquil-atoll-5535.herokuapp.com/"
+var URL_DEFAULT = ""
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -57,6 +57,18 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
+var checkUrl = function(htmldata, checksfile) {
+    $ = cheerio.load(htmldata);
+    var checks = loadChecks(checksfile).sort();
+    var out = {};
+    for(var ii in checks) {
+        var present = $(checks[ii]).length > 0;
+        out[checks[ii]] = present;
+    }
+    return out;
+
+};
+
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -74,12 +86,11 @@ if(require.main == module) {
     if (program.url){
 	rest.get(program.url).on('complete', function(result) {
 	    var checks = loadChecks(program.checks).sort();
-	    var checkJson = checkHtmlFile(result, checks);
+	    var checkJson = checkUrl(result, program.checks);
 	    var outJson = JSON.stringify(checkJson, null, 4);
 	    console.log(outJson);
 	});
     } else {
-	//var checks = loadChecks(program.checks).sort();
 	var checkJson = checkHtmlFile(program.file, program.checks);
 	var outJson = JSON.stringify(checkJson, null, 4);
 	console.log(outJson);
